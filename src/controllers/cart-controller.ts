@@ -2,8 +2,6 @@ import { Response } from "express";
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import { prisma } from "../server";
 
-
-//no very clear but will as soon as practice more
 export const addToCart = async (
   req: AuthenticatedRequest,
   res: Response
@@ -73,7 +71,6 @@ export const addToCart = async (
       data: responseItem,
     });
   } catch (e) {
-    console.log(e);
     res.status(500).json({
       success: false,
       message: "Some error occured!",
@@ -81,8 +78,6 @@ export const addToCart = async (
   }
 };
 
-
-//same with the add to cart
 export const getCart = async (
   req: AuthenticatedRequest,
   res: Response
@@ -152,8 +147,6 @@ export const getCart = async (
   }
 };
 
-
-//this was very clear
 export const removeFromCart = async (
   req: AuthenticatedRequest,
   res: Response
@@ -190,7 +183,6 @@ export const removeFromCart = async (
   }
 };
 
-//shaky
 export const updateCartItemQuantity = async (
   req: AuthenticatedRequest,
   res: Response
@@ -249,8 +241,6 @@ export const updateCartItemQuantity = async (
   }
 };
 
-
-//very clear
 export const clearEntireCart = async (
   req: AuthenticatedRequest,
   res: Response
@@ -284,7 +274,3 @@ export const clearEntireCart = async (
     });
   }
 };
-
-
-
-//learn prisma

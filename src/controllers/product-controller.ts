@@ -23,14 +23,6 @@ export const createProduct = async (
       stock,
     } = req.body;
 
-
-    //check if images are uploaded and not empty
-    if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
-       res.status(400).json({ success: false, message: "No images uploaded" });
-       return
-    }
-
-    //store the uploaded files
     const files = req.files as Express.Multer.File[];
 
     //upload all images to cloudinary
@@ -40,11 +32,7 @@ export const createProduct = async (
       })
     );
 
-
-    //wait for all images to be uploaded
     const uploadresults = await Promise.all(uploadPromises);
-
-    //extract the image urls
     const imageUrls = uploadresults.map((result) => result.secure_url);
 
     const newlyCreatedProduct = await prisma.product.create({
@@ -64,24 +52,12 @@ export const createProduct = async (
       },
     });
 
-    console.log("newly created product", newlyCreatedProduct);
-    
-    // Safely delete uploaded files
-    files.forEach((file) => {
-      if (fs.existsSync(file.path)) {
-        fs.unlinkSync(file.path);
-      } else {
-        console.warn(`File not found: ${file.path}`);
-      }
-    });
-    res.status(201).json({
-      success: true,
-      message: "Product created",
-      data: newlyCreatedProduct
-    });
+    //clean the uploaded files
+    files.forEach((file) => fs.unlinkSync(file.path));
+    res.status(201).json(newlyCreatedProduct);
   } catch (e) {
     console.error(e);
-    res.status(500).json({ success: false, message: `internal server error ${e}` });
+    res.status(500).json({ success: false, message: "Some error occured!" });
   }
 };
 
@@ -92,7 +68,7 @@ export const fetchAllProductsForAdmin = async (
 ): Promise<void> => {
   try {
     const fetchAllProducts = await prisma.product.findMany();
-    res.status(200).json(fetchAllProducts)
+    res.status(200).json(fetchAllProducts);
   } catch (e) {
     console.error(e);
     res.status(500).json({ success: false, message: "Some error occured!" });
@@ -140,55 +116,12 @@ export const updateProduct = async (
       colors,
       price,
       stock,
-      rating
+      rating,
     } = req.body;
 
-    const files = req.files as Express.Multer.File[]; // Get uploaded files
-
-    // Initialize new image URLs
-    let newImageUrls: string[] = [];
-
-
-     // Fetch existing product
-     const existingProduct = await prisma.product.findUnique({
-      where: { id },
-      select: { images: true },
-    });
-
-
-    if (!existingProduct) {
-      res.status(404).json({ success: false, message: "Product not found!" });
-      return;
-    }
-
-
-     // Upload new images to Cloudinary if provided
-     if (files && files.length > 0) {
-      const uploadPromises = files.map((file) =>
-        cloudinary.uploader.upload(file.path, { folder: "ecommerce" })
-      );
-
-      const uploadResults = await Promise.all(uploadPromises);
-      newImageUrls = uploadResults.map((result) => result.secure_url);
-
-
-       // Optional: Delete old images from Cloudinary
-       if (existingProduct.images.length > 0) {
-        const deletePromises = existingProduct.images.map((url) => {
-          const publicId = url.split("/").pop()?.split(".")[0]; // Extract publicId from URL
-          return cloudinary.uploader.destroy(`ecommerce/${publicId}`);
-        });
-
-        await Promise.all(deletePromises);
-      }
-    } else {
-      // If no new images are uploaded, retain the old images
-      newImageUrls = existingProduct.images;
-    }
-
+    console.log(req.body, "req.body");
 
     //homework -> you can also implement image update func
-    //I will do it in the 1hr mark
 
     const product = await prisma.product.update({
       where: { id },
@@ -198,7 +131,6 @@ export const updateProduct = async (
         category,
         description,
         gender,
-        images: newImageUrls,
         sizes: sizes.split(","),
         colors: colors.split(","),
         price: parseFloat(price),
@@ -224,7 +156,7 @@ export const deleteProduct = async (
 
     res
       .status(200)
-      .json({ success: true, message: "Product deleted" });
+      .json({ success: true, message: "Product deleted successfully" });
   } catch (e) {
     console.error(e);
     res.status(500).json({ success: false, message: "Some error occured!" });
